@@ -1,0 +1,308 @@
+<head>
+<style>
+  img {
+    display: "inline-block";
+    margin: 10px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  #videos {
+    display: flex;
+    height: auto;
+  }
+  #videos > video {
+    width: 100%;
+  }
+</style>
+</head>
+
+<body style="margin: 0">
+
+<style type="text/css">
+    
+    body
+    {
+      margin: 0px;
+    }
+  
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+
+</style>
+
+<div style="position: absolute; width: 100%;height: 100%;">
+  <video width="360" height="640" id="live" style="position: relative;display: none;"></video>
+  <canvas id="canvas" width="354" height="630" style=""></canvas>
+  <!-- Canvas width and height come from cropUI rect
+  -7 / -10 -->
+</div>
+
+
+
+<script type="text/javascript">
+
+
+
+
+
+
+// Dans le processus renderer.
+  const {desktopCapturer} = require('electron') 
+  const ipc = require('electron').ipcRenderer;
+  
+  const DCInstance = desktopCapturer;
+
+  var fs = require('fs')
+
+  var Timer = require('easytimer.js');
+  var timer = new Timer();
+ 
+  
+
+
+  function toArrayBuffer(blob, cb) {
+      let fileReader = new FileReader();
+      fileReader.onload = function() {
+          let arrayBuffer = this.result;
+          cb(arrayBuffer);
+      };
+      fileReader.readAsArrayBuffer(blob);
+  }
+
+  function toBuffer(ab) {
+      let buffer = new Buffer(ab.byteLength);
+      let arr = new Uint8Array(ab);
+      for (let i = 0; i < arr.byteLength; i++) {
+          buffer[i] = arr[i];
+      }
+      return buffer;
+  }
+
+ 
+
+ 
+
+
+  
+// function startRecording() {
+  // body... 
+  DCInstance.getSources({
+    types: ["screen", "window"],
+    // thumbnailSize: {width: 320, height: 200}
+  }, (error, sources) => {
+    if (error) throw error
+ 
+
+        let canvasRecorder = null
+        let canvasRecorderChunks = []
+
+        ipc.on('streamstarted', function (event, areaSize) {
+
+             var c=document.getElementById("canvas");
+             c.width = areaSize[0] - 7;
+             c.height = areaSize[1] - 10;
+             console.log(areaSize);
+          
+             timer.start({countdown: true, startValues: {minutes: 58}});
+   
+
+             let CanvasmediaStream;
+
+              console.log('streamstarted ')
+       
+/////////////////////////////////////////////////////////////////////
+
+
+          // setTimeout(function(){
+ 
+                canvasRecorder.onstop = (event) => {
+              
+                toArrayBuffer(new Blob(canvasRecorderChunks, {type: 'video/mp4', quality:9}), function(ab) {
+                        var buffer = toBuffer(ab);
+                        var d = new Date();
+                        var filename = 'D_'+ (d).toISOString().substring(0, 10)+'_'+d.getHours()+'-'+d.getMinutes()+'-'+d.getSeconds();
+
+                        var file = './videos/'+filename+'.mp4';
+                        fs.writeFile(file, buffer, function(err) {
+                            if (err) {
+                                console.error('Failed to save video ' + err);
+                            } else {
+                                console.log('Saved video: ' + file);
+                            }
+                        });
+                    });
+
+
+                canvasRecorderChunks = []
+              }
+              canvasRecorder.ondataavailable = (event) => {
+                canvasRecorderChunks.push(event.data)
+                console.log('avalaible')
+              }
+
+              canvasRecorder.start()
+
+          // },5000)
+////////////////////////////////////////////////////////////////////
+
+
+
+        });
+
+
+       ipc.on('streamstopped', function (event, areaConfig) {
+            
+     
+           if (canvasRecorder && canvasRecorder.state === "recording") {
+              console.warn("mediaRecorder: stop recording")
+              canvasRecorder.stop()
+            }
+
+            //Stop timer
+            timer.stop();
+
+         });
+
+       //Limitation time ..........
+       timer.addEventListener('targetAchieved', function (e) {
+
+            if (canvasRecorder && canvasRecorder.state === "recording") {
+              console.warn("mediaRecorder: stop recording")
+              canvasRecorder.stop()
+            }
+
+
+      });
+       /////////////////////////////
+     var size = [];
+
+     // ipc.on('screen-size', function(event, _size){
+     
+
+            // size[0] = _size.width;
+            // size[1] = _size.height;
+
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          mandatory: {
+            chromeMediaSource: 'desktop'
+          }
+        },
+        video: {
+          mandatory: {
+            chromeMediaSource: "desktop",
+            // chromeMediaSourceId: id,
+            minWidth: 1366, minHeight: 768,
+            maxWidth: 1366, maxHeight: 768
+          }
+        }
+      })
+        .then((mediaStream) => {
+           
+            var streamTop = 0;
+            var streamLeft = 0; 
+
+            ipc.on('recordstream', function(event, cropRectPos){
+               
+               streamLeft = cropRectPos[0];
+               streamTop = cropRectPos[1];
+
+               console.log(streamLeft);
+
+            })
+
+
+                  var video = document.getElementById('live');
+                  
+                  video.srcObject = mediaStream;
+
+                  var v=document.getElementById("live");
+                  var c=document.getElementById("canvas");
+                  var ctx=c.getContext('2d');
+                  
+                  //Setting canvas size
+
+                  v.addEventListener('durationchange',function() {
+
+                  var readstream = setInterval(function() {
+
+                    ctx.drawImage(
+                      v,
+                      (-streamLeft- 5 ),//marginLeft // -5:From area CSS
+                      (-streamTop - 2 ),//marginTop  // -2:From area CSS
+                      1366,
+                      768
+                      )
+
+                    });},false);
+                    
+                   CanvasmediaStream = c.captureStream();
+
+                   canvasRecorder = new MediaRecorder(
+                    
+                      CanvasmediaStream,
+                      {audio: true, video: true}
+
+                    )
+   
+
+                  video.onloadedmetadata = (e) => video.play()
+               
+
+
+        })
+        .catch((error) => {
+          console.error(`${error.name}: ${error.message}`)
+        })
+
+      // });//Screen size received END
+   
+
+     })
+
+// }
+
+
+  ipc.on('streamstopped', function (event) {
+      
+
+  })
+
+  ipc.on('resize-canv', function(event, areaSize){
+
+        // var c=document.getElementById("canvas");
+        //    c.style.width = areaSize[0] - 7;
+        //    c.style.height = areaSize[1] - 10;
+
+  })
+
+ 
+
+
+  function showarea() {
+     
+     ipc.send('show-area');
+
+  }
+
+ 
+ 
+
+</script>
+
+<!-- <script src="../process/record.js"></script> -->
+</body>
+</html> 

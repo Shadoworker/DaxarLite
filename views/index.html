@@ -1,0 +1,99 @@
+<head>
+<style>
+	img {
+		display: "inline-block";
+		margin: 10px;
+		border: 1px solid black;
+		box-sizing: border-box;
+		cursor: pointer;
+	}
+	#videos {
+		display: flex;
+		height: auto;
+	}
+	#videos > video {
+		width: 100%;
+	}
+</style>
+
+<link rel="stylesheet" type="text/css" href="../vendors/materialize/materialize.css">
+<link rel="stylesheet" type="text/css" href="../vendors/materialize/main.css">
+
+</head>
+
+<body style="margin: 0">
+
+<style type="text/css">
+	
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+
+</style>
+
+<headerTag></headerTag>
+
+<!-- Topbar menu -->
+ <topbarTag></topbarTag>
+<!-- Topbar menu end-->
+
+
+<!-- Preview -->
+<previewTag></previewTag>
+
+<!-- Preview end-->
+
+<!-- Timeline menu -->
+<timelineTag></timelineTag>
+<!-- Timeline menu end-->
+
+
+<!-- <div id="buttons">
+	<button id="show" onclick="showarea()">area</button>
+	<button id="start" onclick="startRecording()">Record</button>
+	<button id="stop" onclick="stopRecording()">Stop</button>
+</div> -->
+
+<script type="text/javascript">
+	
+    const ipc = require('electron').ipcRenderer;
+    
+    function showarea() {
+	     
+	     ipc.send('show-area');
+
+    }
+
+   ipc.on('area-shown', function (event) {
+ 
+
+	})
+
+</script>
+
+<script type="riot/tag" src="../components/headerTag.tag.html"></script>
+<script type="riot/tag" src="../components/topbarTag.tag.html"></script>
+<script type="riot/tag" src="../components/previewTag.tag.html"></script>
+<script type="riot/tag" src="../components/timelineTag.tag.html"></script>
+ 
+<script src="../vendors/riot/riot.js"></script>
+
+<script>
+
+  riot.mount('*');
+	
+</script>
+
+</body>
+</html>
