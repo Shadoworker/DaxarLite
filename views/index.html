@@ -1,98 +1,171 @@
+<!DOCTYPE html>
+<html>
 <head>
-<style>
-	img {
-		display: "inline-block";
-		margin: 10px;
-		border: 1px solid black;
-		box-sizing: border-box;
-		cursor: pointer;
-	}
-	#videos {
-		display: flex;
-		height: auto;
-	}
-	#videos > video {
-		width: 100%;
-	}
-</style>
-
-<link rel="stylesheet" type="text/css" href="../vendors/materialize/materialize.css">
-<link rel="stylesheet" type="text/css" href="../vendors/materialize/main.css">
-
+    <title>MY OWN REC APP</title>
 </head>
-
-<body style="margin: 0">
+<body>
 
 <style type="text/css">
-	
-    *::-webkit-scrollbar,::-webkit-scrollbar
-    { 
-        display: none;
-    }
-   
-    *::-webkit-scrollbar-track,::-webkit-scrollbar
-    { 
-        display: none;
-    } 
-    ::-webkit-scrollbar-thumb,
-    *::-webkit-scrollbar-thumb
-    { 
-        display: none;
+    
+    body
+    {
+        margin:0px;
     }
 
 </style>
 
-<headerTag></headerTag>
+<video width="640" height="460" ></video>
 
-<!-- Topbar menu -->
- <topbarTag></topbarTag>
-<!-- Topbar menu end-->
-
-
-<!-- Preview -->
-<previewTag></previewTag>
-
-<!-- Preview end-->
-
-<!-- Timeline menu -->
-<timelineTag></timelineTag>
-<!-- Timeline menu end-->
-
-
-<!-- <div id="buttons">
-	<button id="show" onclick="showarea()">area</button>
-	<button id="start" onclick="startRecording()">Record</button>
-	<button id="stop" onclick="stopRecording()">Stop</button>
-</div> -->
+<button onclick="stopRecording()" id="stop">STOP</button>
+<button onclick="download()" id="download">DOWN</button>
 
 <script type="text/javascript">
-	
-    const ipc = require('electron').ipcRenderer;
-    
-    function showarea() {
-	     
-	     ipc.send('show-area');
+   
+var mediaStream; // Contains video, and possibly added audio track
+var audioStream; // Mic only
+var recordedChunks = [];
+var chunks = [];
+var numrecordedChunks = 0;
+var recorder;
+var includeMic = false;
+var includeSysAudio = false; 
+var localStream;
 
-    }
+var fs = require('fs');
 
-   ipc.on('area-shown', function (event) {
+ navigator.webkitGetUserMedia({
+      audio:{ mandatory: { chromeMediaSource: "desktop"} 
+
+      },
+      video: { mandatory: { chromeMediaSource: "desktop",
+                           
+                          maxWidth:4080,
+                          maxHeight:3250,               
+                          minWidth:4080,
+                          minHeight:3250 
+                        } }
+  }, gotMediaStream, getUserMediaError);
+
+   // navigator.webkitGetUserMedia({
+   //      audio:true,
+   //      video: false
+   //  }, gotAudio, getUserMediaErrorAudio);
+
+
+function gotMediaStream(stream) {
+
+  console.log("Received local stream");
+  var video = document.querySelector("video");
+  video.src = URL.createObjectURL(stream);
+  video.play();
+  localStream = stream;
+  // erdum('freczus !')
+
+  try {
+    console.log("Trying");
+    recorder = new MediaRecorder(stream, {mimeType : "video/webm;codecs=vp8", videoBitsPerSecond:100000000});
+  } catch (e) {
+    console.assert(false, 'Exception while creating MediaRecorder: ' + e);
+    return;
+  }
+  recorder.streams = [stream];
+
+  
+  // recorder.setVideoFrameRate(16); //might be auto-determined due to lighting
+  // recorder.setVideoEncodingBitRate(3000000);
+  // recorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);// MPEG_4_SP
+  // recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+
+  recorder.start();
+  console.log("Recorder is started");
+  recorder.ondataavailable = function(e) {
+    chunks.push(e.data);
+  };
+
+  recorder.onerror = function(e){
+        console.log('Error: ', e);
+  };
+
+  // recorder.ondataavailable = recorderOnDataAvailable;
+  recorder.onstop = recorderOnStop;
+  // console.assert(recorder.state == "recording");
+  // greyOutButtons();
+  //
+};
+
+
+function recorderOnDataAvailable(event) {
+ if (event.data && event.data.size > 0) {
+    recordedChunks.push(event.data);
+    numrecordedChunks += event.data.byteLength;
+  }
+
+}
+
+function recorderOnStop() {
+  console.log('recorderOnStop fired');
+}
  
 
-	})
+function getUserMediaError()
+{
+  console.log("Error ");
+}
 
-</script>
-
-<script type="riot/tag" src="../components/headerTag.tag.html"></script>
-<script type="riot/tag" src="../components/topbarTag.tag.html"></script>
-<script type="riot/tag" src="../components/previewTag.tag.html"></script>
-<script type="riot/tag" src="../components/timelineTag.tag.html"></script>
  
-<script src="../vendors/riot/riot.js"></script>
+function stopRecording() {
+  //document.getElementById("btn").disabled = true;
+  //document.getElementById("btn2").disabled = true;
+  console.log('Stopping record and starting download');
+  recorder.stop();
+  console.log(chunks)
+  // localStream.getVideoTracks()[0].stop();
 
-<script>
+}
+ 
+  function toArrayBuffer(blob, cb) {
+      let fileReader = new FileReader();
+      fileReader.onload = function() {
+          let arrayBuffer = this.result;
+          cb(arrayBuffer);
+      };
+      fileReader.readAsArrayBuffer(blob);
+  }
 
-  riot.mount('*');
-	
+  function toBuffer(ab) {
+      let buffer = new Buffer(ab.byteLength);
+      let arr = new Uint8Array(ab);
+      for (let i = 0; i < arr.byteLength; i++) {
+          buffer[i] = arr[i];
+      }
+      return buffer;
+  }
+
+
+ function download() {
+
+     
+       toArrayBuffer(new Blob(chunks, {type: 'video', mimeType: 'video/x-matroska;codecs=avc1', quality:100}), function(ab) {
+                var buffer = toBuffer(ab);
+                var d = new Date();
+                var filename = 'O_'+ (d).toISOString().substring(0, 10)+'_'+d.getHours()+'-'+d.getMinutes()+'-'+d.getSeconds();
+
+                var file = './videos/'+filename+'.mkv';
+                fs.writeFile(file, buffer, function(err) {
+                    if (err) {
+                        console.error('Failed to save video ' + err);
+                    } else {
+                        console.log('Saved video: ' + file);
+                    }
+                });
+            });
+
+
+
+}
+
+
+
 </script>
 
 </body>
