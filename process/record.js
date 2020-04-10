@@ -55,10 +55,9 @@ function fullscreenScreenshot(callback, imageFormat) {
     desktopCapturer.getSources({types: ['screen']}, (error, sources) => {
         if (error) throw error;
         // console.log(sources);
-        for (let i = 0; i < sources.length; ++i) {
-            console.log(sources);
-            // Filter: main screen
-            if (sources[i].name === "Entire screen") {
+        for (const source of sources) {
+
+            if ((source.name === 'Entire Screen') || (source.name === 'Entire screen') ) {
                 navigator.webkitGetUserMedia({
                     audio: false,
                     video: {

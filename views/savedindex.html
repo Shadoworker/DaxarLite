@@ -46,7 +46,7 @@
 <div id="buttons">
     <!-- set them after a unique btn with diff ui in diff cases -->
 	<button id="show" onclick="showarea()">area</button>
-	<button id="start"  >Record</button>
+	<button id="start"onclick="startRecording()"  >Record</button>
 	<button id="stop" onclick="stopRecording()">Stop</button>
 </div>
 
@@ -56,223 +56,63 @@
 
 
 
-
-// Dans le processus renderer.
-  const {desktopCapturer} = require('electron')	
-  const ipc = require('electron').ipcRenderer;
-  const { exec } = require('child_process');
-
-  var fs = require('fs')
-
-  var Timer = require('easytimer.js');
-  var timer = new Timer();
-	
+	// Dans le processus renderer.
+	const { desktopCapturer } = require('electron')
+	const ipc = require('electron').ipcRenderer;
 
 
-  function toArrayBuffer(blob, cb) {
-	    let fileReader = new FileReader();
-	    fileReader.onload = function() {
-	        let arrayBuffer = this.result;
-	        cb(arrayBuffer);
-	    };
-	    fileReader.readAsArrayBuffer(blob);
-	}
-
-  function toBuffer(ab) {
-	    let buffer = new Buffer(ab.byteLength);
-	    let arr = new Uint8Array(ab);
-	    for (let i = 0; i < arr.byteLength; i++) {
-	        buffer[i] = arr[i];
-	    }
-	    return buffer;
-	}
-
- 
-
-  function execute_item(argument) {
-  	// body...
-  	inode(argument[0]);
-  	let burger = 'good';
-
-  }
-
-
-  
-// function startRecording() {
-	// body... 
-  desktopCapturer.getSources({
-		types: ["screen", "window"],
-		// thumbnailSize: {width: 320, height: 200}
-	}, (error, sources) => {
-		if (error) throw error
-
-		// const videoLive = document.querySelector("video#live")
-		// const videoRecorded = document.querySelector("video#recorded")
-
-		let mediaRecorder = null
-		let mediaRecorderChunks = []
-
-        ipc.on('streamstarted', function (event) {
- 
-           console.log('event to startstream !') 
-             //Start limitation time
-             timer.start({countdown: true, startValues: {minutes: 35}});
-
-	
-			// if (videoLive.srcObject) {
-				console.warn("mediaRecorder: start recording")
-
-				let mediaStream;
-
-				  mediaRecorder.onstop = (event) => {
-					// videoRecorded.src = URL.createObjectURL(new Blob(mediaRecorderChunks))
-			        // console.log(mediaRecorderChunks);
-
-					toArrayBuffer(new Blob(mediaRecorderChunks, {type: 'video/mp4', quality:9}), function(ab) {
-					        var buffer = toBuffer(ab);
-					        var file = './videos/exp.mp4';
-					        fs.writeFile(file, buffer, function(err) {
-					            if (err) {
-					                console.error('Failed to save video ' + err);
-					            } else {
-					                console.log('Saved video: ' + file);
-					            }
-					        });
-					    });
-
-
-					mediaRecorderChunks = []
-				}
-				mediaRecorder.ondataavailable = (event) => {
-					mediaRecorderChunks.push(event.data)
-					console.log('avalaible')
-				}
-
-				mediaRecorder.start()
-	     
-
-	     	});
-
-
-		   ipc.on('streamstopped', function (event, areaConfig) {
-            
-			if (mediaRecorder && mediaRecorder.state === "recording") {
-				console.warn("mediaRecorder: stop recording")
-				mediaRecorder.stop()
-			}
-
-             //Stop timer
-			  timer.stop();
-
-	       });
-
-           //Limitation time ..........
-		   timer.addEventListener('targetAchieved', function (e) {
-			// console.log('targetAchieved !')
-				if (mediaRecorder && mediaRecorder.state === "recording") {
-					console.warn("mediaRecorder: stop recording")
-					mediaRecorder.stop()
-				}
-
-			});
-		   /////////////////////////////
-
-		   // let size = [];
-		   // ipc.on('screen-size', function(event, _size){
-
-     //          size[0] = _size.width;
-     //          size[1] = _size.height;
-
-     //          console.log(size);
-
-		   // });
-
-			navigator.mediaDevices.getUserMedia({
+	function startRecording() {
+		
+		desktopCapturer.getSources({ types: ['window', 'screen'] }).then(async sources => {
+		for (const source of sources) {
+			if (source.name === 'daxar-area') {
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia({
 				audio: false,
 				video: {
 					mandatory: {
-						chromeMediaSource: "desktop",
-						// chromeMediaSourceId: id,
-
-						minWidth: 1336, minHeight: 760,
-						maxWidth: 1336, maxHeight: 760
+					chromeMediaSource: 'desktop',
+					chromeMediaSourceId: source.id,
+					minWidth: 1280,
+					maxWidth: 1280,
+					minHeight: 720,
+					maxHeight: 720
 					}
 				}
-			})
-				.then((mediaStream) => {
-					 
-				    mediaStream = mediaStream
-					mediaRecorder = new MediaRecorder(mediaStream, {audio: false, video: true})
-
-
-
 				})
-				.catch((error) => {
-					console.error(`${error.name}: ${error.message}`)
-				})
-	 
+				handleStream(stream)
+			} catch (e) {
+				handleError(e)
+			}
+			return
+			}
+		}
+		})
 
-	   })
+	}
+	
 
-// }
+	function handleStream (stream) {
+	const video = document.querySelector('video')
+	video.srcObject = stream
+	video.onloadedmetadata = (e) => video.play()
+	}
 
-
-  function showarea() {
-     
-     ipc.send('show-area');
-
-  }
-
-   ipc.on('streamstopped', function (event, areaConfig) {
-
-   	  setTimeout(function(){
-       
-      let areaX = areaConfig[0] + 2;
-      let areaY = areaConfig[1] + 6;
-      let areaW = areaConfig[2] - 25;
-      let areaH = areaConfig[3] - 20;
-      
-
-   //    let commandcrop = 'ffmpeg -i ./videos/exp.mp4 -filter:v "crop='+areaW+':'+areaH+':'+areaX+':'+areaY+'" ./videos/exp_crop.mp4';
-	 
-	  // let commandcompress = 'ffmpeg -i ./videos/exp_crop.mp4 -vcodec h264 -acodec aac ./videos/exp_compress.mp4';     
-	  // // console.log(commandcrop);
-		 //   exec(commandcrop, (err, stdout, stderr) => {
-		 //    if (err) {
-		 //      // node couldn't execute the command
-		 //      console.log('enable to process');
-		 //      return;
-		 //    }
-		 //    else
-		 //     {
-		 //     	console.log('successfull 1');
-
-		 //          exec(commandcompress, (err, stdout, stderr) => {
-			// 	    if (err) {
-			// 	      // node couldn't execute the command
-			// 	      console.log('enable to process');
-			// 	      return;
-			// 	    }
-			// 	    else
-			// 	     {
-			// 	     	console.log('successfull 2');
-			// 	     }
-			// 	   });
+	function handleError (e) {
+	console.log(e)
+	}
 
 
 
-		 //     }
-		 //   });
+	function showarea() {
+		
+		ipc.send('show-area');
 
-           
+	}
 
-   	  },600); //Let the video file enough time to be created
 
-   });
 
- 
 </script>
-
-<!-- <script src="../process/record.js"></script> -->
+ 
 </body>
 </html>
