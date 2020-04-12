@@ -1,18 +1,9 @@
-# DaxarLite
+# Daxar Lite
 Its all about safness !
 
 
 #APP LOGIC :
-
-Two windows : 
- - THE MAIN ONE (WHERE YOU HAVE COMMON ACTIONS)
- - THE AREA RECT
-
- ## The main window define the main app space
-
- ## The area rect , the recorded area.
-
- * Electron allows us to record a window or the entire screen but not a specific RECT (Area).
+* Electron allows us to record a window or the entire screen but not a specific RECT (Area).
 
 
 DAXAAR - LOGIC :
