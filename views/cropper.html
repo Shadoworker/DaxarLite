@@ -1,0 +1,283 @@
+<head>
+<style>
+  img {
+    display: "inline-block";
+    margin: 10px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  #videos {
+    display: flex;
+    height: auto;
+  }
+  #videos > video {
+    width: 100%;
+  }
+</style>
+</head>
+
+<body style="margin: 0">
+
+<style type="text/css">
+    
+    body
+    {
+      margin: 0px;
+    }
+  
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+
+    #canvas{
+
+      border: solid 1px grey;
+
+    }
+
+</style>
+
+<div style="position: absolute; width: 100%;height: 100%;">
+  <video width="360" height="640" id="live" style="position: relative; "></video>
+  <canvas id="canvas" width="354" height="630" style=""></canvas>
+  <!-- Canvas width and height come from cropUI rect
+  -7 / -10 -->
+</div>
+
+
+<script type="text/javascript">
+
+ 
+	// ELECTRON
+	const { desktopCapturer, ipcRenderer } = require('electron')	
+	const ipc = ipcRenderer;
+	
+	
+	function toArrayBuffer(blob, cb) {
+		let fileReader = new FileReader();
+		fileReader.onload = function() {
+			let arrayBuffer = this.result;
+			cb(arrayBuffer);
+		};
+		fileReader.readAsArrayBuffer(blob);
+	}
+
+	function toBuffer(ab) {
+		let buffer = new Buffer(ab.byteLength);
+		let arr = new Uint8Array(ab);
+		for (let i = 0; i < arr.byteLength; i++) {
+			buffer[i] = arr[i];
+		}
+		return buffer;
+	}
+
+
+	
+	const FILE_PATH = "/Users/kayfo/Documents/Projects/General_Works/Devs/DesktopApps/DaxarBase/records"
+
+
+	var fs = require('fs')
+	var Timer = require('easytimer.js');
+	var m_timer = new Timer();
+	var m_mediaRecorder = null
+	var m_mediaStream = null
+	var m_mediaRecorderChunks = []
+ 
+	var m_canvasMediaRecorder = null
+	var m_canvasMediaStream = null
+	var m_canvasMediaRecorderChunks = []
+
+
+  var m_video = document.getElementById("live");
+  var m_canvas = document.getElementById("canvas");
+  var m_ctx = m_canvas.getContext('2d');
+   
+
+  // START
+  ipc.on("start-stream", (e, canvasSpecs) => {
+
+      // Setup canvas (aka cropper)
+      SetupCanvas(canvasSpecs)
+      //Start Timer
+	    m_timer.start({countdown: true, startValues: {minutes: 0.25}});
+
+      // MediaStream sources
+      desktopCapturer.getSources({ types: ['screen'] }).then(async sources => {
+      
+        for (const source of sources) {
+        if (source.name === 'Entire Screen') {
+        try {
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: source.id,
+            minWidth: 1280,
+            maxWidth: 1280,
+            minHeight: 720,
+            maxHeight: 720
+            }
+          }
+          }).then((stream) => {
+            
+            handleStream(stream)
+
+          }).catch((error) => { console.log("wuy bonii !")})
+
+          // Actions
+          m_canvasMediaRecorder.start()
+
+          m_canvasMediaRecorder.onstop = (event) => {
+              
+          // videoRecorded.src = URL.createObjectURL(new Blob(mediaRecorderChunks))
+          console.log(m_canvasMediaRecorderChunks);
+
+          toArrayBuffer(new Blob(m_canvasMediaRecorderChunks, {type: 'video/mp4', quality:9}), function(ab) {
+              var buffer = toBuffer(ab);
+              
+              var d = new Date();
+              var filename = 'Daxaar_' + (d).valueOf();
+              var extension = ".mp4";
+              var file = FILE_PATH + "/" + filename + extension;
+              fs.writeFile(file, buffer, function(err) {
+                if (err) {
+                  console.error('Failed to save video ' + err);
+                } else {
+                  console.log('Saved video: ' + file);
+                }
+              });
+            });
+
+
+            m_canvasMediaRecorderChunks = []
+          }
+
+          
+          // m_mediaRecorder.ondataavailable = (event) => {
+          //   m_mediaRecorderChunks.push(event.data)
+          //   console.log('available')
+          // }
+ 
+
+
+
+        } catch (e) {
+          handleError(e)
+        }
+        return
+        }
+      }
+    })
+
+
+
+  }) // ON STREAMSTARTED
+
+
+
+	function handleStream (stream) {
+
+	  m_mediaStream = stream
+		// m_mediaRecorder = new MediaRecorder(stream, {audio: false, video: true})
+    console.log('available')
+
+    // Add stream to video player : 
+    m_video.srcObject = m_mediaStream;
+
+    // Drawing on canvas : Duration change => Video is being played
+    m_video.addEventListener('durationchange',function() {
+    
+    var readingStream = setInterval(function() {
+
+        m_ctx.drawImage(
+            m_video,
+            (- 5 ),
+            (- 2 ),
+            1366, // Screen size
+            768   // Screen size
+          )
+
+        })
+
+      },false);
+      
+    m_canvasMediaStream = m_canvas.captureStream();
+
+      m_canvasMediaRecorder = new MediaRecorder(
+      
+        m_canvasMediaStream,
+        {audio: true, video: true}
+
+    )
+
+         
+    m_canvasMediaRecorder.ondataavailable = (event) => {
+              
+        m_canvasMediaRecorderChunks.push(event.data)
+        console.log('Canv - available')
+
+      }
+
+    m_video.onloadedmetadata = (e) => m_video.play()
+
+		// const video = document.querySelector('video')
+		// video.srcObject = stream
+    // video.onloadedmetadata = (e) => video.play()
+    
+	}
+
+	function handleError (e) {
+		console.log(e)
+	}
+
+
+  // CANVAS SIZE
+  function SetupCanvas(canvasSpecs)
+  {
+     m_canvas.width = canvasSpecs.w;
+     m_canvas.height = canvasSpecs.h;
+  }
+
+	//STOPPED USER ON ACTION  ..........
+	ipc.on('streamstopped', function (event, areaConfig) {
+            
+    if (m_canvasMediaRecorder && m_canvasMediaRecorder.state === "recording") {
+				console.warn("mediaRecorder: stop recording")
+				m_canvasMediaRecorder.stop()
+			}
+		// Then Stop timer
+		m_timer.stop();
+
+	});
+
+	//STOPPED BY MAX VIDEO DURATION LIMITATION ..........
+	m_timer.addEventListener('targetAchieved', function (e) {
+    console.log('targetAchieved !')
+    if (m_canvasMediaRecorder && m_canvasMediaRecorder.state === "recording") {
+      
+        console.log("Max duration reached")
+        m_canvasMediaRecorder.stop()
+    }
+
+	});
+
+ 
+
+</script>
+ 
+</body>
+</html> 

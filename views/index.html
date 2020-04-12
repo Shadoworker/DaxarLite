@@ -1,0 +1,84 @@
+<head>
+<style>
+	img {
+		display: "inline-block";
+		margin: 10px;
+		border: 1px solid black;
+		box-sizing: border-box;
+		cursor: pointer;
+	}
+	#videos {
+		display: flex;
+		height: auto;
+	}
+	#videos > video {
+		width: 100%;
+	}
+</style>
+</head>
+
+<body style="margin: 0">
+
+<link rel="stylesheet" href="../vendors/semantic/semantic.css">
+
+<style type="text/css">
+	
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+
+	#daxaar_box
+	{
+		text-align: center;
+		border: dashed 1.5px black;
+		border-radius: 8px;
+		padding: 110px;
+	}
+
+</style>
+
+<!-- <div id="videos">
+	<video id="live" autoplay></video>
+	<video id="recorded" autoplay controls></video>
+</div> -->
+
+ 
+  <div class="ui two column centered grid" style="margin-top: 25%;">
+	<div class="column" id="daxaar_box" >
+		<button id="show" onclick="ShowArea()" class="ui primary button ">
+			DAXAAR
+		</button>
+	</div>
+	 
+  </div>
+ 
+<script type="text/javascript">
+
+
+// Dans le processus renderer.
+  const {desktopCapturer} = require('electron')	
+  const ipc = require('electron').ipcRenderer;
+
+
+  function ShowArea() {
+     
+     ipc.send('show-area');
+
+  }
+ 
+
+</script>
+ 
+</body>
+</html>

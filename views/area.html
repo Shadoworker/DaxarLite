@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body >
+<div id="area" >
+	
+</div>
+ 
+<style type="text/css">
+	html, body
+	{
+		background-color: transparent;
+		/*height: 100%;*/
+		margin:2px 2px 2px 2px;
+		margin: 0px;
+		pointer-events: none;
+        overflow: hidden;
+
+	}
+	#area
+	{
+	  position: absolute;
+	  border:dashed 2px #808080;
+	 -webkit-app-region: drag;
+	  pointer-events: none;
+	  width: 98.4%;
+	  height: 98.4%;
+	  transition: border 0.3s ease;
+
+	}
+   
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+	
+
+</style>
+  
+ <script type="text/javascript">
+ 	
+    const ipc = require('electron').ipcRenderer;
+
+    ipc.on('start-stream', function (event) {
+      
+      document.getElementById('area').style = "-webkit-app-region: no-drag;border-color:#9a24bf;"
+
+	})
+
+    ipc.on('stop-stream', function (event) {
+	    //Perfom UI effects
+	    document.getElementById('area').style = "-webkit-app-region: no-drag;border-color:#808080;"
+
+	})
+ 
+
+ </script>
+
+</body>
+</html> 

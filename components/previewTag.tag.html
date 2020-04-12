@@ -1,0 +1,58 @@
+<previewTag>
+	
+  <div class="row" style="margin-top: 10px">
+    <div class="col s12">
+      <div class="col s10  offset-s1" style="height: 500px;border-radius: 6px 6px;border:solid 0.5px #9a24bf;">
+        
+        <p  style="width: 100%;text-align: center;margin-top: 17%;">
+          <span>
+            <img class="new-icon" onclick={ showArea } src="../assets/new-icon.png" style="width: 120px; height: auto;">
+          </span><br>
+          <span class="front" style="color: gray;cursor: default;">Click on the plus to start recording</span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+     
+    
+  
+ <style type="text/css">
+   .new-icon
+   {
+    cursor: pointer;
+
+   }
+   .new-icon:hover
+   {
+    opacity: 0.6;
+   }
+   .previewTag
+   {
+    
+   }
+    
+ </style>
+
+  <script>
+  	   //On.mount !important for events and effects
+  	   var self = this;
+  	   this.on('mount', function() 
+  	   {
+          
+             
+
+       });
+ 
+
+
+       showArea()
+       {
+
+         ipc.send('show-area');
+
+       }
+
+  </script>
+
+</previewTag>

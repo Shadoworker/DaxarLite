@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+
+<style type="text/css">
+
+    
+    html,body
+    {
+    	margin: 0;
+        background-color: #f2f2f2;
+    }
+	
+    *::-webkit-scrollbar,::-webkit-scrollbar
+    { 
+        display: none;
+    }
+   
+    *::-webkit-scrollbar-track,::-webkit-scrollbar
+    { 
+        display: none;
+    } 
+    ::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb
+    { 
+        display: none;
+    }
+    .opticons
+    {
+      cursor: pointer;
+    }
+	.mover
+	{
+	 -webkit-app-region: drag;
+	 cursor: crosshair;
+	}
+
+	
+</style>
+
+<div style="position: absolute;top: 0px;">  
+
+ <span class="mover" style="width: 100%;float: left;margin-bottom: 6px;height: 5px; background-color: #624dac;">
+ 	
+ </span>
+<!-- 
+ <span style="float: left;margin-left:5px;margin-bottom: 6px;-webkit-filter:grayscale(100%);pointer-events: none;">
+ 	<img class="opticons"  onclick="triggerhide2()" src="../assets/icon1.png" style="width: 35px;height: auto;">
+ </span> -->
+
+ <span style="float: left;margin-left:5px;margin-bottom: 6px;">
+  <button onclick="StartStream()">
+    <img id="recordicon" class="opticons" src="../assets/icon3.png" style="width: 35px;height: auto;" >
+  </button>
+ </span>
+
+  <!-- <span style="float: left;margin-left:5px;-webkit-filter:grayscale(100%);pointer-events: none;">
+ 	<img class="opticons" onclick="triggerhide()" src="../assets/icon2.png" style="width: 35px;height: auto;">
+ </span> -->
+
+</div>
+
+ <script type="text/javascript">
+ 	
+ 	     const ipc = require('electron').ipcRenderer;
+
+ 	     var m_streamStarted = false;
+     
+       function StartStream()
+        {
+	       if(!m_streamStarted)
+	       {
+	         ipc.send('init-stream');
+	         document.getElementById('recordicon').style="width: 35px;height: auto;	-webkit-filter: invert(100%)";
+	       }
+	       else
+	       {
+	         ipc.send('end-stream');
+	         document.getElementById('recordicon').style="width: 35px;height: auto;-webkit-filter: invert(0%)";
+         }	
+         
+	       m_streamStarted = !m_streamStarted;
+
+
+        }
+
+      
+      
+      //Perfom UI effects
+	    ipc.on('stop-stream', function (event) {
+	  	})
+       
+ 
+
+ </script>
+
+
+</body>
+</html>
