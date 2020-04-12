@@ -15,13 +15,43 @@ Two windows :
  * Electron allows us to record a window or the entire screen but not a specific RECT (Area).
 
 
-DAXAR - LOGIC :
+DAXAAR - LOGIC :
 
- + Recording whole screen
- + Having a placeholder needed area window
- + Having a window with a HTML5 canvas :
-    - Getting the area placeholder size and pos 
-    - And streaming the recorded whole screen stream (But conveniently Cropped)
- + Finally getting the canvas stream and saving it into a Video formated file (.mp4)
+• CORE :This Logic needs 3 screens "Windows" (+ One)
+
+ -- A main app window 
+    - With a basic init-streaming button
+ -- A "desired-screen-area-to-record" placeholder window a.k.a "area" 
+    - Movable and Resizable
+ -- And a cropper window 
+    - Containing a HTML5-canvas Element and a hidden HTML-video Element
+    - And a Record/Stop button
+    
+ • PROCESS : 
+ 
+ -- Init streaming (On main app window)
+ -- The previous action displays the "desired-screen-area-to-record" placeholder window 
+ -- User Moves and/or Resizes the window "area"
+ -- User clicks on Record/Stop button to start the streaming
+ -- The "area" settings (x and y pos, width and height) are send to the cropper window
+ -- Cropper window :
+    + Sets canvas size (width and height)
+    + Starts the "whole" screen recording process
+    + Load record stream data in the HTML-video Element and autoplays it
+    + Draws the video-stream in the canvas at the specified position (To match the crop area:see CSS STYLING IN CODE)
+    + Record Canvas area and push every Blob data into a chunksArray
+    + On streaming stopped (either by MAX VIDEO DURATION or USER ACTION),
+      the chunks are converted and saved to a proper video format (.MP4 , currently)
+
+  • UPGRADE :
+  -- Working on a way to get a better rendering (HD) - Actual output seems not very net
+  -- Working on supporting more format (.MKV, .GIF)
+  
+  
+  
+  
+  
+  
+  # Ave Daxaar !
 
  
