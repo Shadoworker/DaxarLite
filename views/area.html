@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>daxar-area</title>
 </head>
 <body >
 <div id="area" >
@@ -51,34 +50,20 @@
   
  <script type="text/javascript">
  	
-
     const ipc = require('electron').ipcRenderer;
-     
-    ipc.on('vidstream-go', function (event, stream) {
+
+    ipc.on('start-stream', function (event) {
       
-      console.log(stream);
-
-	})
-
-
-    ipc.on('streamstarted', function (event) {
-      
-	 
       document.getElementById('area').style = "-webkit-app-region: no-drag;border-color:#9a24bf;"
 
 	})
 
-    ipc.on('streamstopped', function (event) {
-	      
-	      	//Perfom UI effects
-	 document.getElementById('area').style = "-webkit-app-region: no-drag;border-color:#808080;"
-	      	
+    ipc.on('stop-stream', function (event) {
+	    //Perfom UI effects
+	    document.getElementById('area').style = "-webkit-app-region: no-drag;border-color:#808080;"
 
 	})
-
-
  
-
 
  </script>
 

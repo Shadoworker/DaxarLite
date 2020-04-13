@@ -46,13 +46,15 @@
  <span class="mover" style="width: 100%;float: left;margin-bottom: 6px;height: 5px; background-color: #624dac;">
  	
  </span>
-
- <!-- <span style="float: left;margin-left:5px;margin-bottom: 6px;-webkit-filter:grayscale(100%);pointer-events: none;">
+<!-- 
+ <span style="float: left;margin-left:5px;margin-bottom: 6px;-webkit-filter:grayscale(100%);pointer-events: none;">
  	<img class="opticons"  onclick="triggerhide2()" src="../assets/icon1.png" style="width: 35px;height: auto;">
  </span> -->
 
  <span style="float: left;margin-left:5px;margin-bottom: 6px;">
- 	<img id="recordicon" class="opticons" src="../assets/icon3.png" style="width: 35px;height: auto;" onclick="startstream()">
+  <button onclick="StartStream()">
+    <img id="recordicon" class="opticons" src="../assets/icon3.png" style="width: 35px;height: auto;" >
+  </button>
  </span>
 
   <!-- <span style="float: left;margin-left:5px;-webkit-filter:grayscale(100%);pointer-events: none;">
@@ -63,42 +65,35 @@
 
  <script type="text/javascript">
  	
- 	   const ipc = require('electron').ipcRenderer;
+ 	     const ipc = require('electron').ipcRenderer;
 
- 	   var streamstarted = true;
+ 	     var m_streamStarted = false;
      
-       function startstream()
+       function StartStream()
         {
-	      streamstarted = !streamstarted;
-	      if(!streamstarted)
+	       if(!m_streamStarted)
 	       {
-	         ipc.send('startstream');
+	         ipc.send('init-stream');
 	         document.getElementById('recordicon').style="width: 35px;height: auto;	-webkit-filter: invert(100%)";
 	       }
 	       else
 	       {
-	         ipc.send('stopstream');
+	         ipc.send('end-stream');
 	         document.getElementById('recordicon').style="width: 35px;height: auto;-webkit-filter: invert(0%)";
-	       }	
+         }	
+         
+	       m_streamStarted = !m_streamStarted;
+
 
         }
 
-
-	   ipc.on('streamstopped', function (event) {
-	      
-	      	//Perfom UI effects
-
-
-		})
+      
+      
+      //Perfom UI effects
+	    ipc.on('stop-stream', function (event) {
+	  	})
        
-
-       function triggerhide()
-        {
-       	  ipc.send('triggerhide');
-        }
-
  
-
 
  </script>
 
